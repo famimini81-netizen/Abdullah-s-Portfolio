@@ -1,78 +1,79 @@
-const header = document.querySelector(".site-header");
-const navToggle = document.querySelector(".nav-toggle");
-const navMenu = document.querySelector(".nav-menu");
+const loader = document.querySelector(".loader");
+const header = document.querySelector(".header");
+const menuBtn = document.querySelector(".menu-btn");
+const navLinksWrap = document.querySelector(".nav-links");
 const navLinks = document.querySelectorAll(".nav-link");
 const themeToggle = document.querySelector(".theme-toggle");
-const themeIcon = document.querySelector(".theme-icon");
-const backToTop = document.querySelector(".back-to-top");
+const backTop = document.querySelector(".back-top");
 const revealItems = document.querySelectorAll(".reveal");
-const progressItems = document.querySelectorAll(".progress");
-const filterButtons = document.querySelectorAll(".filter-btn");
-const projectCards = document.querySelectorAll(".project-card");
-const contactForm = document.querySelector("#contactForm");
-const typingTarget = document.querySelector(".typing-text");
+const skillItems = document.querySelectorAll(".skill");
+const statItems = document.querySelectorAll(".stat strong");
+const filterButtons = document.querySelectorAll(".filter");
+const projects = document.querySelectorAll(".project");
+const slides = document.querySelectorAll(".slide");
+const dotsWrap = document.querySelector(".slider-dots");
+const nextBtn = document.querySelector(".next");
+const prevBtn = document.querySelector(".prev");
+const contactForm = document.querySelector(".contact-form");
+const typingText = document.querySelector(".typing-text");
+const heroGrid = document.querySelector(".hero-grid");
+const tiltCards = document.querySelectorAll(".service, .project, .timeline-card, .blog-card, .stat");
 
-const typingPhrases = [
-  "self-healing automation workflows.",
-  "custom AI agents for real businesses.",
-  "Python backends that scale cleanly.",
-  "AWS AI/ML pipelines for production."
+const phrases = [
+  "AI Automation Engineer.",
+  "AI Agent Developer.",
+  "Python Backend Engineer.",
+  "n8n, Make.com & Zapier Specialist."
 ];
 
 let phraseIndex = 0;
 let charIndex = 0;
-let deleting = false;
+let isDeleting = false;
+let slideIndex = 0;
 
-// Persist the preferred color mode between visits.
-const savedTheme = localStorage.getItem("portfolio-theme");
+window.addEventListener("load", () => {
+  setTimeout(() => loader.classList.add("hidden"), 450);
+});
+
+const savedTheme = localStorage.getItem("theme");
 if (savedTheme === "light") {
-  document.body.classList.add("light-theme");
-  themeIcon.textContent = "L";
+  document.body.classList.add("light");
+  themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
 }
 
-// Lightweight typing animation for the hero value proposition.
-function typeHeroText() {
-  if (!typingTarget) return;
+function typeLoop() {
+  const phrase = phrases[phraseIndex];
+  typingText.textContent = phrase.slice(0, charIndex);
 
-  const phrase = typingPhrases[phraseIndex];
-  typingTarget.textContent = phrase.slice(0, charIndex);
-
-  if (!deleting && charIndex < phrase.length) {
+  if (!isDeleting && charIndex < phrase.length) {
     charIndex += 1;
-    setTimeout(typeHeroText, 58);
+    setTimeout(typeLoop, 62);
     return;
   }
 
-  if (!deleting && charIndex === phrase.length) {
-    deleting = true;
-    setTimeout(typeHeroText, 1300);
+  if (!isDeleting && charIndex === phrase.length) {
+    isDeleting = true;
+    setTimeout(typeLoop, 1200);
     return;
   }
 
-  if (deleting && charIndex > 0) {
+  if (isDeleting && charIndex > 0) {
     charIndex -= 1;
-    setTimeout(typeHeroText, 28);
+    setTimeout(typeLoop, 28);
     return;
   }
 
-  deleting = false;
-  phraseIndex = (phraseIndex + 1) % typingPhrases.length;
-  setTimeout(typeHeroText, 220);
+  isDeleting = false;
+  phraseIndex = (phraseIndex + 1) % phrases.length;
+  setTimeout(typeLoop, 260);
 }
 
-// Header, active section, and floating action state.
-function handleScrollState() {
-  const scrolled = window.scrollY > 20;
-  header.classList.toggle("scrolled", scrolled);
-  backToTop.classList.toggle("show", window.scrollY > 700);
-}
+function handleScroll() {
+  header.classList.toggle("scrolled", window.scrollY > 28);
+  backTop.classList.toggle("show", window.scrollY > 700);
 
-function setActiveNav() {
   const sections = [...document.querySelectorAll("main section[id]")];
-  const current = sections
-    .filter(section => window.scrollY >= section.offsetTop - 130)
-    .pop();
-
+  const current = sections.filter(section => window.scrollY >= section.offsetTop - 140).pop();
   if (!current) return;
 
   navLinks.forEach(link => {
@@ -80,7 +81,7 @@ function setActiveNav() {
   });
 }
 
-const revealObserver = new IntersectionObserver((entries) => {
+const revealObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       entry.target.classList.add("visible");
@@ -89,39 +90,100 @@ const revealObserver = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.16 });
 
-// Animate skill bars only once they are visible.
-const progressObserver = new IntersectionObserver((entries) => {
+const skillObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
-      const value = entry.target.dataset.progress || "0";
-      const label = entry.target.querySelector("span");
-      entry.target.style.setProperty("--progress-value", `${value}%`);
+      const value = entry.target.dataset.progress;
+      entry.target.style.setProperty("--value", `${value}%`);
+      entry.target.querySelector("span").dataset.value = `${value}%`;
       entry.target.classList.add("animated");
-      if (label) label.dataset.value = `${value}%`;
-      progressObserver.unobserve(entry.target);
+      skillObserver.unobserve(entry.target);
     }
   });
 }, { threshold: 0.35 });
 
-revealItems.forEach(item => revealObserver.observe(item));
-progressItems.forEach(item => progressObserver.observe(item));
+const counterObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const target = Number(entry.target.dataset.count);
+    let current = 0;
+    const step = Math.max(1, Math.ceil(target / 42));
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      entry.target.textContent = target === 100 ? `${current}%` : `${current}+`;
+    }, 28);
+    counterObserver.unobserve(entry.target);
+  });
+}, { threshold: 0.4 });
 
-navToggle.addEventListener("click", () => {
-  const isOpen = navMenu.classList.toggle("open");
-  navToggle.setAttribute("aria-expanded", String(isOpen));
+function showSlide(index) {
+  slideIndex = (index + slides.length) % slides.length;
+  slides.forEach((slide, i) => slide.classList.toggle("active", i === slideIndex));
+  document.querySelectorAll(".slider-dots button").forEach((dot, i) => {
+    dot.classList.toggle("active", i === slideIndex);
+  });
+}
+
+function addHeroTilt() {
+  if (!heroGrid) return;
+
+  heroGrid.addEventListener("mousemove", event => {
+    const rect = heroGrid.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    heroGrid.classList.add("is-tilting");
+    heroGrid.style.transform = `rotateX(${y * -5}deg) rotateY(${x * 6}deg)`;
+  });
+
+  heroGrid.addEventListener("mouseleave", () => {
+    heroGrid.classList.remove("is-tilting");
+    heroGrid.style.transform = "rotateX(0deg) rotateY(0deg)";
+  });
+}
+
+function addCardTilt() {
+  tiltCards.forEach(card => {
+    card.addEventListener("mousemove", event => {
+      const rect = card.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+      card.style.transform = `translateY(-8px) rotateX(${y * -7}deg) rotateY(${x * 9}deg) translateZ(20px)`;
+    });
+
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = "";
+    });
+  });
+}
+
+slides.forEach((_, index) => {
+  const dot = document.createElement("button");
+  dot.type = "button";
+  dot.setAttribute("aria-label", `Show testimonial ${index + 1}`);
+  dot.addEventListener("click", () => showSlide(index));
+  dotsWrap.appendChild(dot);
+});
+
+menuBtn.addEventListener("click", () => {
+  const open = navLinksWrap.classList.toggle("open");
+  menuBtn.setAttribute("aria-expanded", String(open));
 });
 
 navLinks.forEach(link => {
   link.addEventListener("click", () => {
-    navMenu.classList.remove("open");
-    navToggle.setAttribute("aria-expanded", "false");
+    navLinksWrap.classList.remove("open");
+    menuBtn.setAttribute("aria-expanded", "false");
   });
 });
 
 themeToggle.addEventListener("click", () => {
-  const light = document.body.classList.toggle("light-theme");
-  localStorage.setItem("portfolio-theme", light ? "light" : "dark");
-  themeIcon.textContent = light ? "L" : "D";
+  const light = document.body.classList.toggle("light");
+  localStorage.setItem("theme", light ? "light" : "dark");
+  themeToggle.innerHTML = light ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
 });
 
 filterButtons.forEach(button => {
@@ -130,41 +192,38 @@ filterButtons.forEach(button => {
     filterButtons.forEach(btn => btn.classList.remove("active"));
     button.classList.add("active");
 
-    projectCards.forEach(card => {
-      const categories = card.dataset.category || "";
-      const showCard = filter === "all" || categories.includes(filter);
-      card.classList.toggle("hide", !showCard);
+    projects.forEach(project => {
+      const show = filter === "all" || project.dataset.category.includes(filter);
+      project.classList.toggle("hide", !show);
     });
   });
 });
 
-backToTop.addEventListener("click", () => {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-});
+nextBtn.addEventListener("click", () => showSlide(slideIndex + 1));
+prevBtn.addEventListener("click", () => showSlide(slideIndex - 1));
 
-// The form opens a pre-filled email so the static site works without a backend.
+setInterval(() => showSlide(slideIndex + 1), 5200);
+
+backTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
 contactForm.addEventListener("submit", event => {
   event.preventDefault();
-  const status = contactForm.querySelector(".form-status");
-  status.textContent = "Thanks. Your message is ready to send by email.";
-
-  const formData = new FormData(contactForm);
-  const subject = encodeURIComponent(`Portfolio inquiry from ${formData.get("name")}`);
-  const body = encodeURIComponent(
-    `Name: ${formData.get("name")}\nEmail: ${formData.get("email")}\nProject: ${formData.get("project")}\n\n${formData.get("message")}`
-  );
-
+  const data = new FormData(contactForm);
+  const subject = encodeURIComponent(`Portfolio inquiry from ${data.get("name")}`);
+  const body = encodeURIComponent(`Name: ${data.get("name")}\nEmail: ${data.get("email")}\nService: ${data.get("service")}\n\n${data.get("message")}`);
+  contactForm.querySelector(".form-status").textContent = "Opening your email app...";
   window.location.href = `mailto:ai8254072@gmail.com?subject=${subject}&body=${body}`;
   contactForm.reset();
 });
 
+revealItems.forEach(item => revealObserver.observe(item));
+skillItems.forEach(item => skillObserver.observe(item));
+statItems.forEach(item => counterObserver.observe(item));
+
 document.querySelector("#year").textContent = new Date().getFullYear();
-
-window.addEventListener("scroll", () => {
-  handleScrollState();
-  setActiveNav();
-});
-
-handleScrollState();
-setActiveNav();
-typeHeroText();
+window.addEventListener("scroll", handleScroll);
+handleScroll();
+showSlide(0);
+addHeroTilt();
+addCardTilt();
+typeLoop();
